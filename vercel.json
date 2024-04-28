@@ -1,0 +1,9 @@
+{
+    "version": 2,
+    "builds": [
+        {"src": "webpython.py", "use": "@vercel/python"}
+    ],
+    "routes": [
+        {"src": "/(.*)", "dest": "webpython.py"}
+    ]
+}

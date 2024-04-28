@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find your parking space</title>
+  <link rel="stylesheet" href="styles_lot.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      text-align: center;
+    }
+    .heading {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .parking-lots {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .parking-lot {
+      width: 150px;
+      height: 150px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      margin: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .parking-lot:hover {
+      background-color: #e0e0e0;
+    }
+    video {
+      width: 100%; /* Adjust the video size as needed */
+      max-width: 640px; /* Adjust the maximum width as needed */
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div class="parking-lots">
+      <div class="parking-lot" onclick="selectLot(1)">Lot 1</div>
+      <div class="parking-lot" onclick="selectLot(2)">Lot 2</div>
+      <div class="parking-lot" onclick="selectLot(3)">Lot 3</div>
+      <div class="parking-lot" onclick="selectLot(4)">Lot 4</div>
+      <div class="parking-lot" onclick="window.location.href = 'http://127.0.0.1:8000/video_feed'">View Selected Lot</div>
+    </div>
+  </div>
+
+  <script>
+    var videoPlayer = document.getElementById('videoPlayer');
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    var currentFrame = 0;
+
+    function selectLot(lotNumber) {
+      var videoUrl = "";
+      switch(lotNumber) {
+        case 1:
+          videoUrl = "https://firebasestorage.googleapis.com/v0/b/parking-with-devops.appspot.com/o/gettyimages-1533928757-640_adpp.mp4?alt=media&token=d2fb383f-8504-4d46-a977-2b1e02a6fbfa";
+          break;
+        case 2:
+          videoUrl = "https://firebasestorage.googleapis.com/v0/b/parking-with-devops.appspot.com/o/istockphoto-1046782266-640-adpp-is_dNpvycW4.mp4?alt=media&token=52ae3e31-e5a5-4beb-8577-2d77f2f71474";
+          break;
+        case 3:
+          videoUrl = "https://firebasestorage.googleapis.com/v0/b/parking-with-devops.appspot.com/o/istockphoto-1370353417-640_adpp_is.mp4?alt=media&token=d4cd845b-8b18-4bcf-8be1-b1bc90d26138";
+          break;
+        case 4:
+          videoUrl = "https://firebasestorage.googleapis.com/v0/b/parking-with-devops.appspot.com/o/istockphoto-845199510-640_adpp_is.mp4?alt=media&token=fdbbd0dc-db3a-46e4-b6d3-afa2583cdfba";
+          break;
+        case 5:
+          // Add the URL for lot 5 here
+          break;
+        case 6:
+          // Add the URL for lot 6 here
+          break;
+      }
+      videoPlayer.src = videoUrl;
+      videoPlayer.load(); // Load the video
+      videoPlayer.addEventListener('loadedmetadata', function() {
+        canvas.width = videoPlayer.videoWidth;
+        canvas.height = videoPlayer.videoHeight;
+        videoPlayer.frameRate = 25; // Assume 25 FPS, adjust based on your video
+        extractFrame();
+      });
+
+      // Fetch request to process the video
+      fetch('https://parkfinder-dev-4a91376a4491.herokuapp.com/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: videoUrl })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Video processed successfully:', data);
+      })
+      .catch(error => console.error('Error processing video:', error));
+    }
+
+    function extractFrame() {
+      if (isNaN(videoPlayer.duration) || isNaN(videoPlayer.frameRate) || currentFrame >= videoPlayer.duration * videoPlayer.frameRate) {
+        return; // Stop the frame extraction if data is invalid
+      }
+      videoPlayer.currentTime = currentFrame / videoPlayer.frameRate;
+      videoPlayer.pause();
+      context.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+      var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      console.log(imageData); // This is your image data for the current frame
+      currentFrame++;
+      requestAnimationFrame(extractFrame);
+    }
+
+
+    function selectLot(lotNumber) {
+        // Make an AJAX request to the Flask server
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/select_lot", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    console.log("Lot selected successfully:", lotNumber);
+                } else {
+                    console.error("Error selecting lot:", lotNumber);
+                }
+            }
+        };
+        xhr.send("lot=" + lotNumber);
+    }
+  </script>
+</body>
+</html>
