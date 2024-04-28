@@ -1,9 +1,9 @@
 Flask==3.0.3
 flask-cors
 opencv-python-headless==4.9.0.80
-torch==2.2.1  
+torch==2.2.1 
 torchvision==0.17.1 
-RUN pip install Ultralytics
+Ultralytics==8.2.3
 pip==24.0
 pyyaml
 uuid
